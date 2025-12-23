@@ -2,454 +2,459 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AboElfadl Operation Room | نقل مشفر</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>AboElfadl V5 | ضغط وإرسال</title>
     
-    <!-- مكتبة Tailwind CSS -->
+    <!-- مكتبات النظام -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- مكتبة PeerJS -->
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
-    <!-- أيقونات FontAwesome -->
+    <!-- مكتبة ضغط الملفات JSZip -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- خط Cairo -->
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&family=Fira+Code:wght@400;700&display=swap" rel="stylesheet">
 
     <style>
+        :root {
+            --color-gold: #D4AF37;
+            --color-red: #DC2626;
+            --bg-dark: #050505;
+        }
         body {
             font-family: 'Cairo', sans-serif;
-            background-color: #050505;
-            color: #ffffff;
+            background-color: var(--bg-dark);
+            color: #fff;
             overflow-x: hidden;
         }
+        .font-code { font-family: 'Fira Code', monospace; }
         
-        /* خط الأرقام والأكواد */
-        .font-mono-num { font-family: 'JetBrains Mono', monospace; }
-
-        /* الألوان الخاصة ببراند أبو الفضل */
-        .text-gold { color: #D4AF37; }
-        .border-gold { border-color: #D4AF37; }
-        .bg-gold { background-color: #D4AF37; }
-        .text-red-main { color: #DC2626; }
-        .bg-red-main { background-color: #DC2626; }
-
-        /* الزجاج الخلفي */
         .glass-panel {
-            background: rgba(20, 20, 20, 0.8);
-            backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
+            background: rgba(20, 20, 20, 0.9);
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5);
         }
 
-        /* أنيميشن */
-        .fade-in { animation: fadeIn 0.5s ease-in-out; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-
-        /* تأثير المسح الراداري */
-        .radar-scan {
-            position: absolute;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background: linear-gradient(180deg, rgba(220, 38, 38, 0) 0%, rgba(220, 38, 38, 0.1) 50%, rgba(220, 38, 38, 0) 100%);
-            background-size: 100% 200%;
-            animation: radar 3s linear infinite;
-            pointer-events: none;
-            z-index: 0;
+        /* Zip Processing Animation */
+        .processing-pulse {
+            animation: pulse-border 1.5s infinite;
         }
-        @keyframes radar { 0% { background-position: 0% -100%; } 100% { background-position: 0% 200%; } }
+        @keyframes pulse-border {
+            0% { border-color: var(--color-gold); box-shadow: 0 0 0 0 rgba(212, 175, 55, 0.4); }
+            70% { border-color: transparent; box-shadow: 0 0 0 5px rgba(212, 175, 55, 0); }
+            100% { border-color: var(--color-gold); box-shadow: 0 0 0 0 rgba(212, 175, 55, 0); }
+        }
     </style>
 </head>
-<body class="min-h-screen flex flex-col items-center justify-center p-4 selection:bg-red-900 selection:text-white">
+<body class="min-h-screen flex flex-col selection:bg-red-900 selection:text-white">
 
-    <!-- خلفية تقنية -->
-    <div class="fixed inset-0 z-0 opacity-20" 
-         style="background-image: radial-gradient(#333 1px, transparent 1px); background-size: 20px 20px;">
-    </div>
-
-    <!-- الهيدر الثابت -->
-    <header class="fixed top-0 w-full p-4 z-50 bg-black/80 backdrop-blur-md border-b border-gray-800 flex justify-between items-center">
+    <!-- Header -->
+    <header class="fixed top-0 w-full z-50 bg-black/95 border-b border-gray-800 h-16 flex items-center justify-between px-4 shadow-lg">
         <div class="flex items-center gap-3">
-            <i class="fas fa-shield-virus text-gold text-2xl"></i>
+            <div class="w-8 h-8 rounded bg-red-900 flex items-center justify-center border border-red-500">
+                <i class="fas fa-shield-alt text-white"></i>
+            </div>
             <div>
-                <h1 class="font-bold text-lg tracking-wider">ABOELFADL <span class="text-red-main">SECURE</span></h1>
+                <h1 class="font-black text-base tracking-wide leading-none">ABOELFADL <span class="text-red-600">V5</span></h1>
+                <span class="text-[9px] text-gray-500 font-code">AUTO-ZIP ENABLED</span>
             </div>
         </div>
-        <div id="connection-status-badge" class="px-3 py-1 rounded-full text-xs font-bold bg-gray-900 text-gray-500 border border-gray-700 flex items-center gap-2">
-            <div class="w-2 h-2 rounded-full bg-gray-500"></div>
-            غير متصل
+        
+        <div class="flex gap-2">
+            <!-- Disconnect Button -->
+            <button onclick="endSession()" class="hidden bg-red-900/20 hover:bg-red-600 border border-red-800 text-red-500 hover:text-white px-3 py-1.5 rounded text-xs font-bold transition flex items-center gap-2" id="disconnect-btn">
+                <i class="fas fa-power-off"></i> إنهاء
+            </button>
+
+            <div id="status-badge" class="flex items-center gap-2 px-3 py-1 rounded border border-gray-800 bg-gray-900/50 text-xs font-bold text-gray-500 transition-all">
+                <div class="w-2 h-2 rounded-full bg-gray-600" id="status-dot"></div>
+                <span id="status-text">غير متصل</span>
+            </div>
         </div>
     </header>
 
-    <!-- المحتوى الرئيسي -->
-    <main class="w-full max-w-5xl z-10 pt-20">
+    <!-- Main Content -->
+    <main class="pt-24 pb-10 px-4 w-full max-w-5xl mx-auto">
 
-        <!-- الشاشة 1: تسجيل الدخول والربط -->
-        <div id="login-view" class="w-full max-w-2xl mx-auto fade-in">
-            <div class="glass-panel rounded-2xl p-8 relative overflow-hidden">
-                <div class="radar-scan"></div>
-                
-                <h2 class="text-2xl font-bold mb-6 text-center text-gold relative z-10">إعداد القناة الآمنة</h2>
-                
-                <!-- هويتي -->
-                <div class="mb-8 relative z-10">
-                    <label class="text-xs text-gray-400 block mb-2">معرفك الرقمي (شاركه مع الطرف الآخر)</label>
-                    <div class="flex gap-2">
-                        <div class="flex-1 bg-black/60 border border-red-900/50 rounded-lg p-3 font-mono-num text-lg text-center tracking-wider text-red-500 select-all" id="my-id">
-                            جاري التشفير...
-                        </div>
-                        <button onclick="copyId()" class="bg-gray-800 hover:bg-gray-700 text-white px-4 rounded-lg transition border border-gray-600">
-                            <i class="fas fa-copy"></i>
-                        </button>
-                    </div>
+        <!-- Connection Area -->
+        <div id="connection-view" class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+            <!-- My ID -->
+            <div class="glass-panel p-5 rounded-xl">
+                <label class="text-xs text-gray-400 font-bold block mb-2">معرفك الشخصي</label>
+                <div class="flex gap-2">
+                    <div class="flex-1 bg-black/50 border border-gray-700 p-2 rounded text-center text-gold font-code select-all" id="my-id">...</div>
+                    <button onclick="copyId()" class="bg-gray-800 px-3 rounded text-gray-400 hover:text-white transition"><i class="fas fa-copy"></i></button>
                 </div>
-
-                <!-- الاتصال -->
-                <div class="relative z-10">
-                    <label class="text-xs text-gray-400 block mb-2">معرف الطرف المستقبل</label>
-                    <div class="flex gap-2">
-                        <input type="text" id="remote-id-input" placeholder="أدخل ID الجهاز الآخر هنا..." 
-                               class="flex-1 bg-black/60 border border-gray-700 rounded-lg p-3 text-white focus:border-gold outline-none transition font-mono-num">
-                        <button onclick="connectToPeer()" class="bg-gradient-to-r from-red-800 to-red-600 hover:from-red-700 hover:to-red-500 text-white px-6 rounded-lg font-bold shadow-lg shadow-red-900/30 transition">
-                            <i class="fas fa-link mr-2"></i> ربط
-                        </button>
-                    </div>
+            </div>
+            <!-- Connect To -->
+            <div class="glass-panel p-5 rounded-xl">
+                <label class="text-xs text-gray-400 font-bold block mb-2">الاتصال بـ (Remote ID)</label>
+                <div class="flex gap-2">
+                    <input type="text" id="remote-id" placeholder="أدخل المعرف هنا" class="flex-1 bg-black/50 border border-gray-700 p-2 rounded text-white font-code outline-none focus:border-red-600 transition">
+                    <button onclick="connectPeer()" id="connect-btn" class="bg-red-700 hover:bg-red-600 text-white px-4 rounded font-bold text-xs transition">ربط</button>
                 </div>
-                
-                <p class="text-center text-xs text-gray-500 mt-6 relative z-10">
-                    <i class="fas fa-lock text-gold ml-1"></i> الاتصال محمي بتقنية WebRTC P2P (بدون سيرفر وسيط)
-                </p>
             </div>
         </div>
 
-        <!-- الشاشة 2: لوحة التحكم (تظهر بعد الاتصال) -->
-        <div id="dashboard-view" class="hidden w-full fade-in">
+        <!-- Dashboard (Hidden until connected) -->
+        <div id="dashboard" class="hidden opacity-0 transition-opacity duration-500">
             
-            <!-- شريط المعلومات العلوي (Stats) -->
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-                <!-- بطاقة مرسلة -->
-                <div class="glass-panel p-4 rounded-xl border-r-4 border-r-blue-500">
-                    <div class="text-gray-400 text-xs mb-1">الملفات المرسلة</div>
-                    <div class="text-2xl font-bold font-mono-num" id="stat-sent">0</div>
-                    <div class="text-xs text-blue-400 mt-1"><i class="fas fa-upload"></i> صادر</div>
+            <!-- Controls Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                <!-- Upload Files -->
+                <div onclick="document.getElementById('file-input').click()" class="glass-panel p-6 rounded-xl flex flex-col items-center justify-center cursor-pointer hover:border-blue-500 transition group h-32">
+                    <i class="fas fa-file-invoice text-3xl text-blue-500 mb-2 group-hover:scale-110 transition"></i>
+                    <span class="font-bold text-sm">إرسال ملفات</span>
+                    <span class="text-[10px] text-gray-500">اختيار متعدد</span>
+                    <input type="file" id="file-input" multiple class="hidden">
                 </div>
 
-                <!-- بطاقة مستقبلة -->
-                <div class="glass-panel p-4 rounded-xl border-r-4 border-r-green-500">
-                    <div class="text-gray-400 text-xs mb-1">الملفات المستقبلة</div>
-                    <div class="text-2xl font-bold font-mono-num" id="stat-received">0</div>
-                    <div class="text-xs text-green-400 mt-1"><i class="fas fa-download"></i> وارد</div>
+                <!-- Upload Folder (Auto Zip) -->
+                <div onclick="document.getElementById('folder-input').click()" class="glass-panel p-6 rounded-xl flex flex-col items-center justify-center cursor-pointer hover:border-gold transition group h-32 relative overflow-hidden">
+                    <div class="absolute top-0 right-0 bg-gold text-black text-[9px] font-bold px-2 py-1 rounded-bl">AUTO ZIP</div>
+                    <i class="fas fa-file-archive text-3xl text-gold mb-2 group-hover:scale-110 transition"></i>
+                    <span class="font-bold text-sm">إرسال مجلد</span>
+                    <span class="text-[10px] text-gray-500">سيتم ضغطه وإرساله كـ ZIP</span>
+                    <input type="file" id="folder-input" webkitdirectory directory class="hidden">
                 </div>
 
-                <!-- إجمالي الحجم -->
-                <div class="glass-panel p-4 rounded-xl border-r-4 border-r-gold">
-                    <div class="text-gray-400 text-xs mb-1">حجم البيانات (Traffic)</div>
-                    <div class="text-2xl font-bold font-mono-num text-gold" id="stat-size">0 MB</div>
-                    <div class="text-xs text-yellow-600 mt-1"><i class="fas fa-chart-pie"></i> إجمالي</div>
-                </div>
-
-                <!-- حالة الشبكة -->
-                <div class="glass-panel p-4 rounded-xl border-r-4 border-r-red-600 bg-red-900/10">
-                    <div class="text-gray-400 text-xs mb-1">بروتوكول الأمان</div>
-                    <div class="text-lg font-bold text-red-500">AES-128</div>
-                    <div class="text-xs text-red-400 mt-1 blink"><i class="fas fa-circle text-[8px]"></i> قناة نشطة</div>
+                <!-- Status Panel -->
+                <div class="glass-panel p-4 rounded-xl flex flex-col justify-center gap-2 h-32">
+                    <div class="flex justify-between items-center text-xs text-gray-400">
+                        <span>المرسلة:</span>
+                        <span id="stat-sent" class="text-white font-code">0</span>
+                    </div>
+                    <div class="flex justify-between items-center text-xs text-gray-400">
+                        <span>المستلمة:</span>
+                        <span id="stat-received" class="text-white font-code">0</span>
+                    </div>
+                    <div class="w-full bg-gray-800 h-1 rounded mt-1"></div>
+                    <div id="zip-status" class="text-[10px] text-gold text-center hidden animate-pulse">
+                        <i class="fas fa-cog fa-spin"></i> جاري ضغط الملفات...
+                    </div>
                 </div>
             </div>
 
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <!-- Queue & Progress -->
+            <div class="glass-panel rounded-xl p-0 overflow-hidden min-h-[300px] flex flex-col">
+                <div class="bg-black/40 p-3 border-b border-gray-800 flex justify-between items-center">
+                    <h3 class="text-sm font-bold text-gray-300"><i class="fas fa-satellite-dish mr-2"></i>مركز العمليات</h3>
+                    <span class="text-[10px] bg-gray-800 px-2 rounded text-gray-400">Logs</span>
+                </div>
                 
-                <!-- منطقة الإرسال -->
-                <div class="lg:col-span-2 glass-panel p-6 rounded-xl relative group">
-                    <div class="absolute inset-0 bg-red-600/5 opacity-0 group-hover:opacity-100 transition duration-500 rounded-xl pointer-events-none"></div>
-                    <h3 class="text-lg font-bold mb-4 flex items-center text-white"><i class="fas fa-satellite-dish ml-2 text-gold"></i> مركز الإرسال</h3>
-                    
-                    <div id="drop-zone" class="border-2 border-dashed border-gray-700 hover:border-gold rounded-xl h-48 flex flex-col items-center justify-center cursor-pointer transition-all bg-black/20" onclick="document.getElementById('file-input').click()">
-                        <input type="file" id="file-input" class="hidden">
-                        <i class="fas fa-fingerprint text-4xl text-gray-600 mb-3 group-hover:text-red-500 transition"></i>
-                        <p class="font-bold">انقر أو اسحب الملفات هنا</p>
-                        <p class="text-xs text-gray-500 mt-1">يدعم جميع الصيغ | تشفير تلقائي</p>
+                <!-- Progress Bar Area -->
+                <div id="progress-container" class="hidden bg-red-900/20 p-4 border-b border-red-500/30">
+                    <div class="flex justify-between text-xs mb-2">
+                        <span id="progress-filename" class="text-white truncate max-w-[200px]">filename.ext</span>
+                        <span id="progress-percent" class="text-gold font-code">0%</span>
                     </div>
-
-                    <!-- شريط التقدم والوقت -->
-                    <div id="active-transfer" class="mt-6 hidden bg-black/40 p-4 rounded-lg border border-gray-800">
-                        <div class="flex justify-between items-center mb-2">
-                            <span id="current-filename" class="text-sm font-mono-num truncate max-w-[200px] text-white">document.pdf</span>
-                            <span id="transfer-speed" class="text-xs text-gold font-mono-num">0 MB/s</span>
-                        </div>
-                        
-                        <div class="w-full bg-gray-800 rounded-full h-2 overflow-hidden mb-2">
-                            <div id="progress-bar" class="bg-red-600 h-2 rounded-full w-0 transition-all duration-200"></div>
-                        </div>
-
-                        <div class="flex justify-between items-center text-xs text-gray-400">
-                            <span id="time-remaining"><i class="fas fa-hourglass-half ml-1"></i>جاري الحساب...</span>
-                            <span id="progress-percent" class="text-white font-bold font-mono-num">0%</span>
-                        </div>
+                    <div class="w-full bg-gray-900 h-1.5 rounded-full overflow-hidden">
+                        <div id="progress-bar" class="bg-red-600 h-full w-0 transition-all"></div>
                     </div>
                 </div>
 
-                <!-- سجل العمليات (Logs) -->
-                <div class="glass-panel p-4 rounded-xl flex flex-col h-[350px]">
-                    <h3 class="text-sm font-bold mb-3 text-gray-400 uppercase tracking-widest border-b border-gray-800 pb-2">سجل النظام</h3>
-                    <div id="logs" class="flex-1 overflow-y-auto font-mono-num text-xs space-y-2 pr-2 custom-scrollbar">
-                        <!-- Logs here -->
-                    </div>
+                <!-- Logs List -->
+                <div id="logs-area" class="flex-1 p-4 overflow-y-auto space-y-2 max-h-[300px] font-code text-[11px]">
+                    <div class="text-gray-600 text-center mt-10 italic">جاهز لاستقبال الأوامر...</div>
                 </div>
-            </div>
-
-            <div class="mt-6 text-center">
-                <button onclick="location.reload()" class="text-xs text-red-500 hover:text-red-400 underline">
-                    <i class="fas fa-power-off ml-1"></i> إنهاء الجلسة وتدمير المفاتيح
-                </button>
             </div>
         </div>
 
     </main>
 
+    <footer class="text-center text-[10px] text-gray-600 py-4">
+        AboElfadl Systems V5 - Secure & Compress
+    </footer>
+
     <script>
-        // --- متغيرات النظام ---
+        // --- تهيئة المتغيرات ---
         let peer = null;
         let conn = null;
         let myId = null;
-        
-        // إحصائيات الجلسة
-        let stats = {
-            sent: 0,
-            received: 0,
-            totalBytes: 0
-        };
+        let fileQueue = [];
+        let isProcessing = false;
+        let stats = { sent: 0, received: 0 };
 
-        // متغيرات حساب الوقت والسرعة
-        let startTime = 0;
-        let lastTime = 0;
-        let lastLoaded = 0;
+        // --- بدء التشغيل ---
+        window.onload = initPeer;
 
-        // --- تهيئة PeerJS ---
-        function initSystem() {
-            log("جاري تهيئة بروتوكول الاتصال...", "sys");
+        function initPeer() {
             peer = new Peer(null, { debug: 1 });
-
+            
             peer.on('open', (id) => {
                 myId = id;
                 document.getElementById('my-id').innerText = id;
-                document.getElementById('connection-status-badge').innerHTML = `<div class="w-2 h-2 rounded-full bg-green-500 shadow-[0_0_10px_#22c55e]"></div> متصل بالشبكة`;
-                document.getElementById('connection-status-badge').classList.replace('text-gray-500', 'text-green-400');
-                log(`تم إنشاء المعرف: ${id}`, "success");
             });
 
-            peer.on('connection', (c) => {
-                setupConnection(c);
+            peer.on('connection', (c) => setupConnection(c));
+            
+            peer.on('disconnected', () => {
+                updateStatus('offline');
+                resetUI();
             });
+
+            peer.on('error', (err) => console.error(err));
         }
 
-        // --- الاتصال بطرف آخر ---
-        function connectToPeer() {
-            const remoteId = document.getElementById('remote-id-input').value.trim();
-            if (!remoteId) return alert("الرجاء إدخال ID الطرف الآخر");
-            
-            const c = peer.connect(remoteId);
+        // --- الاتصال ---
+        function connectPeer() {
+            const remote = document.getElementById('remote-id').value;
+            if(!remote) return;
+            const c = peer.connect(remote);
             setupConnection(c);
         }
 
-        // --- إعداد الاتصال وتبديل الشاشة ---
-        function setupConnection(connection) {
-            conn = connection;
-
+        function setupConnection(c) {
+            conn = c;
             conn.on('open', () => {
-                // الانتقال للوحة التحكم
-                document.getElementById('login-view').classList.add('hidden');
-                document.getElementById('dashboard-view').classList.remove('hidden');
-                
-                log("تم تأسيس القناة المشفرة بنجاح.", "success");
-                
-                // تحديث حالة الهيدر
-                const badge = document.getElementById('connection-status-badge');
-                badge.innerHTML = `<div class="w-2 h-2 rounded-full bg-red-500 animate-pulse"></div> اتصال مباشر نشط`;
-                badge.classList.replace('text-green-400', 'text-white');
-                badge.classList.add('bg-red-900/50', 'border-red-600');
+                updateStatus('online');
+                showDashboard();
+                conn.send({type: 'sys', msg: 'اتصال ناجح'});
             });
 
             conn.on('data', handleData);
             
             conn.on('close', () => {
-                alert("تم قطع الاتصال بالطرف الآخر");
-                location.reload();
+                endSession();
             });
         }
 
-        // --- معالجة البيانات ---
-        let incomingChunks = [];
-        let incomingMeta = null;
-        let incomingSize = 0;
-
-        function handleData(data) {
-            if (data.type === 'meta') {
-                incomingMeta = data;
-                incomingChunks = [];
-                incomingSize = 0;
-                startTransferUI(data.name, 'receive');
-                log(`بدأ استقبال: ${data.name}`, "info");
-            } else if (data.type === 'chunk') {
-                incomingChunks.push(data.content);
-                incomingSize += data.content.byteLength;
-                
-                // تحديث الواجهة
-                updateTransferUI(incomingSize, incomingMeta.size);
-
-                if (incomingSize >= incomingMeta.size) {
-                    finalizeDownload();
-                }
+        // --- إنهاء الجلسة (الزر الجديد) ---
+        function endSession() {
+            if(conn) {
+                conn.close();
             }
+            if(peer) {
+                peer.destroy(); // تدمير الهوية بالكامل
+            }
+            alert("تم إنهاء الجلسة وتدمير الاتصال.");
+            location.reload(); // إعادة تحميل الصفحة لتنظيف الذاكرة
         }
 
-        function finalizeDownload() {
-            const blob = new Blob(incomingChunks, { type: incomingMeta.mime });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = incomingMeta.name;
-            a.click();
-            
-            // تحديث الإحصائيات
-            stats.received++;
-            stats.totalBytes += incomingMeta.size;
-            updateDashboardStats();
-            
-            log(`تم الاستلام بنجاح: ${incomingMeta.name}`, "success");
-            endTransferUI();
-        }
-
-        // --- الإرسال ---
+        // --- معالجة الملفات العادية ---
         document.getElementById('file-input').addEventListener('change', (e) => {
-            const file = e.target.files[0];
-            if (file && conn) sendFile(file);
+            addToQueue(Array.from(e.target.files));
         });
 
-        // دعم السحب والإفلات
-        const dropZone = document.getElementById('drop-zone');
-        dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('bg-red-900/20', 'border-red-500'); });
-        dropZone.addEventListener('dragleave', (e) => { e.preventDefault(); dropZone.classList.remove('bg-red-900/20', 'border-red-500'); });
-        dropZone.addEventListener('drop', (e) => {
-            e.preventDefault();
-            dropZone.classList.remove('bg-red-900/20', 'border-red-500');
-            const file = e.dataTransfer.files[0];
-            if (file && conn) sendFile(file);
+        // --- معالجة المجلدات (ضغط ZIP) ---
+        document.getElementById('folder-input').addEventListener('change', async (e) => {
+            const files = Array.from(e.target.files);
+            if(files.length === 0) return;
+
+            // إظهار حالة الضغط
+            document.getElementById('zip-status').classList.remove('hidden');
+            log(`جاري ضغط ${files.length} ملفات...`, 'info');
+
+            try {
+                const zip = new JSZip();
+                
+                // إضافة الملفات للأرشيف
+                // نستخدم webkitRelativePath للحفاظ على هيكل المجلد
+                let folderName = "Archive";
+                if(files[0].webkitRelativePath) {
+                    folderName = files[0].webkitRelativePath.split('/')[0];
+                }
+
+                files.forEach(file => {
+                    zip.file(file.webkitRelativePath || file.name, file);
+                });
+
+                // إنشاء الملف المضغوط
+                const content = await zip.generateAsync({type: "blob"}, (metadata) => {
+                    // يمكن إضافة شريط تقدم للضغط هنا مستقبلاً
+                });
+
+                // تحويل Blob إلى ملف
+                const zipFile = new File([content], `${folderName}.zip`, {type: "application/zip"});
+                
+                log(`تم الضغط بنجاح! الحجم: ${formatBytes(zipFile.size)}`, 'success');
+                document.getElementById('zip-status').classList.add('hidden');
+
+                // إضافة الملف المضغوط للطابور
+                addToQueue([zipFile]);
+
+            } catch (err) {
+                console.error(err);
+                log("فشل في ضغط المجلد", "error");
+                document.getElementById('zip-status').classList.add('hidden');
+            }
         });
+
+        // --- نظام الطابور والإرسال ---
+        function addToQueue(files) {
+            fileQueue.push(...files);
+            if(!isProcessing) processQueue();
+        }
+
+        async function processQueue() {
+            if(fileQueue.length === 0) {
+                isProcessing = false;
+                document.getElementById('progress-container').classList.add('hidden');
+                return;
+            }
+
+            isProcessing = true;
+            const file = fileQueue.shift(); // أخذ الملف الأول
+            
+            await sendFile(file);
+            
+            stats.sent++;
+            document.getElementById('stat-sent').innerText = stats.sent;
+            setTimeout(processQueue, 500);
+        }
 
         function sendFile(file) {
-            conn.send({ type: 'meta', name: file.name, size: file.size, mime: file.type });
-            
-            const chunkSize = 16 * 1024;
-            let offset = 0;
-            const reader = new FileReader();
+            return new Promise((resolve) => {
+                if(!conn || !conn.open) return resolve(); // تخطي إذا انقطع الاتصال
 
-            startTransferUI(file.name, 'send');
-            log(`جاري إرسال: ${file.name}`, "info");
+                document.getElementById('progress-container').classList.remove('hidden');
+                document.getElementById('progress-filename').innerText = `Sending: ${file.name}`;
+                log(`جاري إرسال: ${file.name}`, 'info');
 
-            reader.onload = (e) => {
-                conn.send({ type: 'chunk', content: e.target.result });
-                offset += chunkSize;
+                conn.send({
+                    type: 'meta',
+                    name: file.name,
+                    size: file.size,
+                    mime: file.type
+                });
+
+                const chunkSize = 16 * 1024;
+                let offset = 0;
+                const reader = new FileReader();
+
+                reader.onload = (e) => {
+                    conn.send({ type: 'chunk', content: e.target.result });
+                    offset += chunkSize;
+                    
+                    // تحديث الواجهة
+                    const percent = Math.min(100, ((offset/file.size)*100)).toFixed(0);
+                    document.getElementById('progress-bar').style.width = `${percent}%`;
+                    document.getElementById('progress-percent').innerText = `${percent}%`;
+
+                    if(offset < file.size) {
+                        setTimeout(() => readSlice(offset), 0);
+                    } else {
+                        log(`تم الإرسال: ${file.name}`, 'success');
+                        resolve();
+                    }
+                };
+
+                const readSlice = (o) => {
+                    const slice = file.slice(o, o + chunkSize);
+                    reader.readAsArrayBuffer(slice);
+                };
+
+                readSlice(0);
+            });
+        }
+
+        // --- الاستقبال ---
+        let incoming = { chunks: [], meta: null, received: 0 };
+
+        function handleData(data) {
+            if(data.type === 'sys') {
+                log(`النظام: ${data.msg}`, 'sys');
+            }
+            else if(data.type === 'meta') {
+                incoming.meta = data;
+                incoming.chunks = [];
+                incoming.received = 0;
+                document.getElementById('progress-container').classList.remove('hidden');
+                document.getElementById('progress-filename').innerText = `Receiving: ${data.name}`;
+                log(`استقبال ملف: ${data.name}`, 'info');
+            }
+            else if(data.type === 'chunk') {
+                incoming.chunks.push(data.content);
+                incoming.received += data.content.byteLength;
                 
-                updateTransferUI(Math.min(offset, file.size), file.size);
+                const percent = Math.min(100, ((incoming.received/incoming.meta.size)*100)).toFixed(0);
+                document.getElementById('progress-bar').style.width = `${percent}%`;
+                document.getElementById('progress-percent').innerText = `${percent}%`;
 
-                if (offset < file.size) {
-                    readSlice(offset);
-                } else {
-                    stats.sent++;
-                    stats.totalBytes += file.size;
-                    updateDashboardStats();
-                    log(`اكتمل الإرسال: ${file.name}`, "success");
-                    endTransferUI();
+                if(incoming.received >= incoming.meta.size) {
+                    saveReceivedFile();
                 }
-            };
-
-            const readSlice = (o) => {
-                const slice = file.slice(o, o + chunkSize);
-                reader.readAsArrayBuffer(slice);
-            };
-            readSlice(0);
-        }
-
-        // --- منطق حساب الوقت والسرعة ---
-        function startTransferUI(filename, type) {
-            document.getElementById('active-transfer').classList.remove('hidden');
-            document.getElementById('current-filename').innerText = (type === 'send' ? 'جاري الإرسال: ' : 'جاري الاستقبال: ') + filename;
-            startTime = Date.now();
-            lastTime = startTime;
-            lastLoaded = 0;
-        }
-
-        function updateTransferUI(loaded, total) {
-            const now = Date.now();
-            const percent = ((loaded / total) * 100).toFixed(1);
-            
-            // تحديث الشريط
-            document.getElementById('progress-bar').style.width = `${percent}%`;
-            document.getElementById('progress-percent').innerText = `${percent}%`;
-
-            // حساب السرعة والوقت كل 500ms لتجنب الوميض
-            if (now - lastTime >= 500) {
-                const durationInSeconds = (now - startTime) / 1000;
-                const bytesPerSecond = loaded / durationInSeconds; // متوسط السرعة
-                
-                // حساب الوقت المتبقي
-                const remainingBytes = total - loaded;
-                const remainingSeconds = remainingBytes / bytesPerSecond;
-
-                // العرض
-                document.getElementById('transfer-speed').innerText = formatSize(bytesPerSecond) + '/s';
-                document.getElementById('time-remaining').innerHTML = `<i class="fas fa-clock ml-1"></i> متبقي: ${formatTime(remainingSeconds)}`;
-
-                lastTime = now;
             }
         }
 
-        function endTransferUI() {
+        function saveReceivedFile() {
+            const blob = new Blob(incoming.chunks, { type: incoming.meta.mime });
+            const url = URL.createObjectURL(blob);
+            
+            // إنشاء رابط تحميل تلقائي
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = incoming.meta.name;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            
+            stats.received++;
+            document.getElementById('stat-received').innerText = stats.received;
+            log(`تم الحفظ: ${incoming.meta.name}`, 'success');
+            
+            // إخفاء شريط التقدم بعد ثانية
             setTimeout(() => {
-                document.getElementById('active-transfer').classList.add('hidden');
-                document.getElementById('progress-bar').style.width = '0';
+                document.getElementById('progress-container').classList.add('hidden');
             }, 1000);
         }
 
-        function updateDashboardStats() {
-            document.getElementById('stat-sent').innerText = stats.sent;
-            document.getElementById('stat-received').innerText = stats.received;
-            document.getElementById('stat-size').innerText = formatSize(stats.totalBytes);
+        // --- أدوات الواجهة ---
+        function updateStatus(status) {
+            const badge = document.getElementById('status-badge');
+            const dot = document.getElementById('status-dot');
+            const text = document.getElementById('status-text');
+            const disconnectBtn = document.getElementById('disconnect-btn');
+
+            if(status === 'online') {
+                badge.className = "flex items-center gap-2 px-3 py-1 rounded border border-green-900 bg-green-900/20 text-xs font-bold text-green-400";
+                dot.className = "w-2 h-2 rounded-full bg-green-500 shadow-[0_0_10px_#22c55e]";
+                text.innerText = "متصل آمن";
+                disconnectBtn.classList.remove('hidden');
+            } else {
+                badge.className = "flex items-center gap-2 px-3 py-1 rounded border border-gray-800 bg-gray-900/50 text-xs font-bold text-gray-500";
+                dot.className = "w-2 h-2 rounded-full bg-gray-600";
+                text.innerText = "غير متصل";
+                disconnectBtn.classList.add('hidden');
+            }
         }
 
-        // --- دوال مساعدة ---
+        function showDashboard() {
+            document.getElementById('dashboard').classList.remove('hidden');
+            setTimeout(() => document.getElementById('dashboard').classList.remove('opacity-0'), 100);
+            document.getElementById('connection-view').classList.add('hidden');
+        }
+
+        function resetUI() {
+            document.getElementById('dashboard').classList.add('hidden', 'opacity-0');
+            document.getElementById('connection-view').classList.remove('hidden');
+        }
+
         function log(msg, type) {
-            const logs = document.getElementById('logs');
-            const color = type === 'error' ? 'text-red-500' : type === 'success' ? 'text-green-400' : 'text-gray-300';
-            const icon = type === 'success' ? '>' : type === 'error' ? '!' : '#';
+            const container = document.getElementById('logs-area');
+            if(container.querySelector('.text-center')) container.innerHTML = ''; // مسح رسالة الترحيب
+
+            const color = type === 'success' ? 'text-green-400' : type === 'error' ? 'text-red-500' : type === 'sys' ? 'text-gold' : 'text-blue-300';
+            const icon = type === 'success' ? '✔' : type === 'error' ? '✖' : 'ℹ';
             
-            logs.innerHTML += `<div class="border-b border-gray-800/50 pb-1 mb-1">
-                <span class="text-gold font-bold mr-1">${icon}</span>
-                <span class="${color}">${msg}</span>
-            </div>`;
-            logs.scrollTop = logs.scrollHeight;
-        }
-
-        function formatSize(bytes) {
-            if (bytes === 0) return '0 B';
-            const k = 1024;
-            const sizes = ['B', 'KB', 'MB', 'GB'];
-            const i = Math.floor(Math.log(bytes) / Math.log(k));
-            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-        }
-
-        function formatTime(seconds) {
-            if (!isFinite(seconds) || seconds < 0) return "جاري الحساب...";
-            if (seconds < 60) return `${Math.ceil(seconds)} ثانية`;
-            const m = Math.floor(seconds / 60);
-            const s = Math.ceil(seconds % 60);
-            return `${m} دقيقة و ${s} ثانية`;
+            const div = document.createElement('div');
+            div.className = `border-b border-gray-800 pb-1 ${color}`;
+            div.innerHTML = `<span class="mr-2 opacity-50 text-[9px]">${new Date().toLocaleTimeString()}</span> ${icon} ${msg}`;
+            
+            container.insertBefore(div, container.firstChild);
         }
 
         function copyId() {
-            const id = document.getElementById('my-id').innerText;
-            navigator.clipboard.writeText(id);
-            log("تم نسخ المعرف للحافظة", "sys");
+            navigator.clipboard.writeText(myId);
+            alert("تم النسخ");
         }
 
-        window.onload = initSystem;
+        function formatBytes(bytes) {
+            if (bytes === 0) return '0 B';
+            const sizes = ['B', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(1024));
+            return parseFloat((bytes / Math.pow(1024, i)).toFixed(1)) + ' ' + sizes[i];
+        }
     </script>
 </body>
 </html>
