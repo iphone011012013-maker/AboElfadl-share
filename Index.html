@@ -3,467 +3,455 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AboElfadl Secure Share | مشاركة ملفات آمنة</title>
+    <title>AboElfadl Operation Room | نقل مشفر</title>
     
-    <!-- مكتبة Tailwind CSS للتصميم -->
+    <!-- مكتبة Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    
-    <!-- مكتبة PeerJS للاتصال المباشر بين الأجهزة -->
+    <!-- مكتبة PeerJS -->
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
-    
     <!-- أيقونات FontAwesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- خط Cairo -->
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
 
     <style>
-        /* تخصيص الألوان والخطوط حسب طلب أبو الفضل */
-        @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;800&display=swap');
-        
         body {
             font-family: 'Cairo', sans-serif;
-            background-color: #0a0a0a; /* أسود داكن */
+            background-color: #050505;
             color: #ffffff;
             overflow-x: hidden;
         }
+        
+        /* خط الأرقام والأكواد */
+        .font-mono-num { font-family: 'JetBrains Mono', monospace; }
 
-        /* تأثيرات ذهبية */
+        /* الألوان الخاصة ببراند أبو الفضل */
         .text-gold { color: #D4AF37; }
         .border-gold { border-color: #D4AF37; }
         .bg-gold { background-color: #D4AF37; }
-        
-        /* تأثيرات حمراء */
         .text-red-main { color: #DC2626; }
         .bg-red-main { background-color: #DC2626; }
 
-        /* سكرول بار مخصص */
-        ::-webkit-scrollbar { width: 8px; }
-        ::-webkit-scrollbar-track { background: #1a1a1a; }
-        ::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
-        ::-webkit-scrollbar-thumb:hover { background: #DC2626; }
-
+        /* الزجاج الخلفي */
         .glass-panel {
-            background: rgba(20, 20, 20, 0.95);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(212, 175, 55, 0.2);
-            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5);
+            background: rgba(20, 20, 20, 0.8);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
         }
 
-        .loader {
-            border-top-color: #D4AF37;
-            -webkit-animation: spinner 1.5s linear infinite;
-            animation: spinner 1.5s linear infinite;
+        /* أنيميشن */
+        .fade-in { animation: fadeIn 0.5s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* تأثير المسح الراداري */
+        .radar-scan {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: linear-gradient(180deg, rgba(220, 38, 38, 0) 0%, rgba(220, 38, 38, 0.1) 50%, rgba(220, 38, 38, 0) 100%);
+            background-size: 100% 200%;
+            animation: radar 3s linear infinite;
+            pointer-events: none;
+            z-index: 0;
         }
-        @keyframes spinner {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-        
-        /* تأثير النبض للاتصال */
-        .pulse-ring {
-            box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.7);
-            animation: pulse-red 2s infinite;
-        }
-        @keyframes pulse-red {
-            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.7); }
-            70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(220, 38, 38, 0); }
-            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(220, 38, 38, 0); }
-        }
+        @keyframes radar { 0% { background-position: 0% -100%; } 100% { background-position: 0% 200%; } }
     </style>
 </head>
-<body class="min-h-screen flex flex-col items-center justify-center p-4 relative selection:bg-red-600 selection:text-white">
+<body class="min-h-screen flex flex-col items-center justify-center p-4 selection:bg-red-900 selection:text-white">
 
-    <!-- الخلفية الشبكية التقنية -->
-    <div class="fixed inset-0 z-0 opacity-10 pointer-events-none" 
-         style="background-image: radial-gradient(#333 1px, transparent 1px); background-size: 30px 30px;">
+    <!-- خلفية تقنية -->
+    <div class="fixed inset-0 z-0 opacity-20" 
+         style="background-image: radial-gradient(#333 1px, transparent 1px); background-size: 20px 20px;">
     </div>
 
-    <!-- الهيدر -->
-    <header class="w-full max-w-4xl flex justify-between items-center mb-8 z-10 animate-fade-in-down">
+    <!-- الهيدر الثابت -->
+    <header class="fixed top-0 w-full p-4 z-50 bg-black/80 backdrop-blur-md border-b border-gray-800 flex justify-between items-center">
         <div class="flex items-center gap-3">
-            <div class="w-12 h-12 rounded-full border-2 border-gold flex items-center justify-center bg-black">
-                <i class="fas fa-shield-alt text-gold text-xl"></i>
-            </div>
+            <i class="fas fa-shield-virus text-gold text-2xl"></i>
             <div>
-                <h1 class="text-2xl font-bold tracking-wider">ABOELFADL <span class="text-red-main">SECURE</span></h1>
-                <p class="text-xs text-gray-400">P2P File Transfer Protocol</p>
+                <h1 class="font-bold text-lg tracking-wider">ABOELFADL <span class="text-red-main">SECURE</span></h1>
             </div>
         </div>
-        <div class="text-xs text-gold border border-gold px-3 py-1 rounded bg-black/50">
-            <i class="fas fa-lock ml-1"></i> مشفر طرفي (End-to-End)
+        <div id="connection-status-badge" class="px-3 py-1 rounded-full text-xs font-bold bg-gray-900 text-gray-500 border border-gray-700 flex items-center gap-2">
+            <div class="w-2 h-2 rounded-full bg-gray-500"></div>
+            غير متصل
         </div>
     </header>
 
     <!-- المحتوى الرئيسي -->
-    <main class="w-full max-w-4xl grid grid-cols-1 md:grid-cols-2 gap-6 z-10">
-        
-        <!-- بطاقة جهازي (Sender/Receiver ID) -->
-        <div class="glass-panel p-6 rounded-xl flex flex-col relative overflow-hidden group">
-            <div class="absolute top-0 right-0 w-24 h-24 bg-red-600/10 rounded-bl-full -mr-4 -mt-4 transition-all group-hover:bg-red-600/20"></div>
-            
-            <h2 class="text-xl font-bold mb-4 flex items-center text-white">
-                <i class="fas fa-id-card ml-2 text-red-main"></i> هويتك الرقمية
-            </h2>
-            
-            <div class="bg-black/50 p-4 rounded-lg border border-gray-800 mb-4">
-                <p class="text-sm text-gray-400 mb-1">الـ ID الخاص بك:</p>
-                <div class="flex items-center gap-2">
-                    <span id="my-id" class="text-gold font-mono text-lg font-bold truncate">جاري التوليد...</span>
-                    <button onclick="copyId()" class="p-2 hover:bg-gray-800 rounded transition text-gray-300 hover:text-white" title="نسخ">
-                        <i class="fas fa-copy"></i>
-                    </button>
-                </div>
-            </div>
+    <main class="w-full max-w-5xl z-10 pt-20">
 
-            <p class="text-sm text-gray-400 mt-auto">
-                <i class="fas fa-info-circle ml-1"></i> شارك هذا المعرف مع الجهاز الآخر لتبدأ الاتصال.
-            </p>
-        </div>
-
-        <!-- بطاقة الاتصال -->
-        <div class="glass-panel p-6 rounded-xl flex flex-col">
-            <h2 class="text-xl font-bold mb-4 flex items-center text-white">
-                <i class="fas fa-network-wired ml-2 text-red-main"></i> الاتصال بجهاز آخر
-            </h2>
-
-            <div class="flex flex-col gap-3">
-                <label class="text-sm text-gray-400">أدخل ID الجهاز الآخر:</label>
-                <div class="flex gap-2">
-                    <input type="text" id="remote-id-input" placeholder="ألصق الـ ID هنا..." 
-                           class="flex-1 bg-black/50 border border-gray-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-red-600 transition font-mono">
-                    <button onclick="connectToPeer()" 
-                            class="bg-red-700 hover:bg-red-600 text-white px-6 py-2 rounded-lg transition font-bold shadow-lg shadow-red-900/20">
-                        ربط
-                    </button>
+        <!-- الشاشة 1: تسجيل الدخول والربط -->
+        <div id="login-view" class="w-full max-w-2xl mx-auto fade-in">
+            <div class="glass-panel rounded-2xl p-8 relative overflow-hidden">
+                <div class="radar-scan"></div>
+                
+                <h2 class="text-2xl font-bold mb-6 text-center text-gold relative z-10">إعداد القناة الآمنة</h2>
+                
+                <!-- هويتي -->
+                <div class="mb-8 relative z-10">
+                    <label class="text-xs text-gray-400 block mb-2">معرفك الرقمي (شاركه مع الطرف الآخر)</label>
+                    <div class="flex gap-2">
+                        <div class="flex-1 bg-black/60 border border-red-900/50 rounded-lg p-3 font-mono-num text-lg text-center tracking-wider text-red-500 select-all" id="my-id">
+                            جاري التشفير...
+                        </div>
+                        <button onclick="copyId()" class="bg-gray-800 hover:bg-gray-700 text-white px-4 rounded-lg transition border border-gray-600">
+                            <i class="fas fa-copy"></i>
+                        </button>
+                    </div>
                 </div>
-                <div id="status-display" class="text-sm mt-2 flex items-center gap-2 text-gray-400">
-                    <span class="w-2 h-2 rounded-full bg-gray-500 inline-block" id="status-dot"></span>
-                    <span id="status-text">في انتظار الاتصال...</span>
+
+                <!-- الاتصال -->
+                <div class="relative z-10">
+                    <label class="text-xs text-gray-400 block mb-2">معرف الطرف المستقبل</label>
+                    <div class="flex gap-2">
+                        <input type="text" id="remote-id-input" placeholder="أدخل ID الجهاز الآخر هنا..." 
+                               class="flex-1 bg-black/60 border border-gray-700 rounded-lg p-3 text-white focus:border-gold outline-none transition font-mono-num">
+                        <button onclick="connectToPeer()" class="bg-gradient-to-r from-red-800 to-red-600 hover:from-red-700 hover:to-red-500 text-white px-6 rounded-lg font-bold shadow-lg shadow-red-900/30 transition">
+                            <i class="fas fa-link mr-2"></i> ربط
+                        </button>
+                    </div>
                 </div>
+                
+                <p class="text-center text-xs text-gray-500 mt-6 relative z-10">
+                    <i class="fas fa-lock text-gold ml-1"></i> الاتصال محمي بتقنية WebRTC P2P (بدون سيرفر وسيط)
+                </p>
             </div>
         </div>
 
-        <!-- منطقة نقل الملفات (تظهر بعد الاتصال) -->
-        <div id="transfer-area" class="glass-panel p-6 rounded-xl md:col-span-2 hidden opacity-0 transition-all duration-500">
-            <div class="border-b border-gray-800 pb-4 mb-4 flex justify-between items-center">
-                <h3 class="text-lg font-bold text-gold"><i class="fas fa-exchange-alt ml-2"></i> منطقة النقل</h3>
-                <span class="text-xs bg-green-900 text-green-300 px-2 py-1 rounded">متصل آمن</span>
+        <!-- الشاشة 2: لوحة التحكم (تظهر بعد الاتصال) -->
+        <div id="dashboard-view" class="hidden w-full fade-in">
+            
+            <!-- شريط المعلومات العلوي (Stats) -->
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                <!-- بطاقة مرسلة -->
+                <div class="glass-panel p-4 rounded-xl border-r-4 border-r-blue-500">
+                    <div class="text-gray-400 text-xs mb-1">الملفات المرسلة</div>
+                    <div class="text-2xl font-bold font-mono-num" id="stat-sent">0</div>
+                    <div class="text-xs text-blue-400 mt-1"><i class="fas fa-upload"></i> صادر</div>
+                </div>
+
+                <!-- بطاقة مستقبلة -->
+                <div class="glass-panel p-4 rounded-xl border-r-4 border-r-green-500">
+                    <div class="text-gray-400 text-xs mb-1">الملفات المستقبلة</div>
+                    <div class="text-2xl font-bold font-mono-num" id="stat-received">0</div>
+                    <div class="text-xs text-green-400 mt-1"><i class="fas fa-download"></i> وارد</div>
+                </div>
+
+                <!-- إجمالي الحجم -->
+                <div class="glass-panel p-4 rounded-xl border-r-4 border-r-gold">
+                    <div class="text-gray-400 text-xs mb-1">حجم البيانات (Traffic)</div>
+                    <div class="text-2xl font-bold font-mono-num text-gold" id="stat-size">0 MB</div>
+                    <div class="text-xs text-yellow-600 mt-1"><i class="fas fa-chart-pie"></i> إجمالي</div>
+                </div>
+
+                <!-- حالة الشبكة -->
+                <div class="glass-panel p-4 rounded-xl border-r-4 border-r-red-600 bg-red-900/10">
+                    <div class="text-gray-400 text-xs mb-1">بروتوكول الأمان</div>
+                    <div class="text-lg font-bold text-red-500">AES-128</div>
+                    <div class="text-xs text-red-400 mt-1 blink"><i class="fas fa-circle text-[8px]"></i> قناة نشطة</div>
+                </div>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <!-- إرسال -->
-                <div class="border-2 border-dashed border-gray-700 hover:border-red-600 rounded-xl p-8 flex flex-col items-center justify-center text-center transition-colors cursor-pointer"
-                     id="drop-zone" onclick="document.getElementById('file-input').click()">
-                    <input type="file" id="file-input" class="hidden">
-                    <div class="w-16 h-16 bg-gray-900 rounded-full flex items-center justify-center mb-4 text-3xl text-gray-500 group-hover:text-red-600">
-                        <i class="fas fa-cloud-upload-alt"></i>
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                
+                <!-- منطقة الإرسال -->
+                <div class="lg:col-span-2 glass-panel p-6 rounded-xl relative group">
+                    <div class="absolute inset-0 bg-red-600/5 opacity-0 group-hover:opacity-100 transition duration-500 rounded-xl pointer-events-none"></div>
+                    <h3 class="text-lg font-bold mb-4 flex items-center text-white"><i class="fas fa-satellite-dish ml-2 text-gold"></i> مركز الإرسال</h3>
+                    
+                    <div id="drop-zone" class="border-2 border-dashed border-gray-700 hover:border-gold rounded-xl h-48 flex flex-col items-center justify-center cursor-pointer transition-all bg-black/20" onclick="document.getElementById('file-input').click()">
+                        <input type="file" id="file-input" class="hidden">
+                        <i class="fas fa-fingerprint text-4xl text-gray-600 mb-3 group-hover:text-red-500 transition"></i>
+                        <p class="font-bold">انقر أو اسحب الملفات هنا</p>
+                        <p class="text-xs text-gray-500 mt-1">يدعم جميع الصيغ | تشفير تلقائي</p>
                     </div>
-                    <p class="font-bold text-white mb-1">اضغط لاختيار ملف</p>
-                    <p class="text-xs text-gray-400">أو اسحب الملف وأفلته هنا</p>
+
+                    <!-- شريط التقدم والوقت -->
+                    <div id="active-transfer" class="mt-6 hidden bg-black/40 p-4 rounded-lg border border-gray-800">
+                        <div class="flex justify-between items-center mb-2">
+                            <span id="current-filename" class="text-sm font-mono-num truncate max-w-[200px] text-white">document.pdf</span>
+                            <span id="transfer-speed" class="text-xs text-gold font-mono-num">0 MB/s</span>
+                        </div>
+                        
+                        <div class="w-full bg-gray-800 rounded-full h-2 overflow-hidden mb-2">
+                            <div id="progress-bar" class="bg-red-600 h-2 rounded-full w-0 transition-all duration-200"></div>
+                        </div>
+
+                        <div class="flex justify-between items-center text-xs text-gray-400">
+                            <span id="time-remaining"><i class="fas fa-hourglass-half ml-1"></i>جاري الحساب...</span>
+                            <span id="progress-percent" class="text-white font-bold font-mono-num">0%</span>
+                        </div>
+                    </div>
                 </div>
 
-                <!-- استقبال / سجل -->
-                <div class="bg-black/40 rounded-xl p-4 border border-gray-800 min-h-[150px] flex flex-col">
-                    <h4 class="text-sm font-bold text-gray-300 mb-3 border-b border-gray-800 pb-2">سجل النشاط</h4>
-                    <div id="logs" class="flex-1 overflow-y-auto text-xs font-mono space-y-2 max-h-[150px]">
-                        <!-- الرسائل ستظهر هنا -->
+                <!-- سجل العمليات (Logs) -->
+                <div class="glass-panel p-4 rounded-xl flex flex-col h-[350px]">
+                    <h3 class="text-sm font-bold mb-3 text-gray-400 uppercase tracking-widest border-b border-gray-800 pb-2">سجل النظام</h3>
+                    <div id="logs" class="flex-1 overflow-y-auto font-mono-num text-xs space-y-2 pr-2 custom-scrollbar">
+                        <!-- Logs here -->
                     </div>
                 </div>
             </div>
 
-            <!-- شريط التقدم -->
-            <div id="progress-container" class="mt-6 hidden">
-                <div class="flex justify-between text-xs mb-1">
-                    <span id="progress-text" class="text-gray-300">جاري النقل...</span>
-                    <span id="progress-percent" class="text-gold font-bold">0%</span>
-                </div>
-                <div class="w-full bg-gray-800 rounded-full h-2 overflow-hidden">
-                    <div id="progress-bar" class="bg-gradient-to-r from-red-700 to-red-500 h-2 rounded-full w-0 transition-all duration-300"></div>
-                </div>
+            <div class="mt-6 text-center">
+                <button onclick="location.reload()" class="text-xs text-red-500 hover:text-red-400 underline">
+                    <i class="fas fa-power-off ml-1"></i> إنهاء الجلسة وتدمير المفاتيح
+                </button>
             </div>
         </div>
 
     </main>
 
-    <!-- الفوتر -->
-    <footer class="mt-12 text-center text-gray-500 text-xs z-10">
-        <p>&copy; 2025 AboElfadl Development. All Rights Reserved.</p>
-        <p class="mt-1 opacity-50">Secure File Sharing System v1.0</p>
-    </footer>
-
-    <!-- سكريبت الوظائف -->
     <script>
-        // --- تهيئة المتغيرات ---
+        // --- متغيرات النظام ---
         let peer = null;
         let conn = null;
         let myId = null;
+        
+        // إحصائيات الجلسة
+        let stats = {
+            sent: 0,
+            received: 0,
+            totalBytes: 0
+        };
 
-        const statusText = document.getElementById('status-text');
-        const statusDot = document.getElementById('status-dot');
-        const transferArea = document.getElementById('transfer-area');
-        const logs = document.getElementById('logs');
-        const progressBar = document.getElementById('progress-bar');
-        const progressContainer = document.getElementById('progress-container');
-        const progressPercent = document.getElementById('progress-percent');
+        // متغيرات حساب الوقت والسرعة
+        let startTime = 0;
+        let lastTime = 0;
+        let lastLoaded = 0;
 
         // --- تهيئة PeerJS ---
-        function initPeer() {
-            log("جاري تهيئة الاتصال الآمن...", "info");
-            // إنشاء معرف عشوائي لكن يبدو احترافي
-            // استخدام السيرفر الافتراضي المجاني لـ PeerJS
-            peer = new Peer(null, {
-                debug: 2
-            });
+        function initSystem() {
+            log("جاري تهيئة بروتوكول الاتصال...", "sys");
+            peer = new Peer(null, { debug: 1 });
 
             peer.on('open', (id) => {
                 myId = id;
                 document.getElementById('my-id').innerText = id;
-                updateStatus("جاهز للاتصال", "green");
-                log(`تم إنشاء الهوية: ${id}`, "success");
+                document.getElementById('connection-status-badge').innerHTML = `<div class="w-2 h-2 rounded-full bg-green-500 shadow-[0_0_10px_#22c55e]"></div> متصل بالشبكة`;
+                document.getElementById('connection-status-badge').classList.replace('text-gray-500', 'text-green-400');
+                log(`تم إنشاء المعرف: ${id}`, "success");
             });
 
-            peer.on('connection', (connection) => {
-                handleConnection(connection);
-            });
-
-            peer.on('error', (err) => {
-                console.error(err);
-                updateStatus("خطأ في الاتصال", "red");
-                log(`خطأ: ${err.type}`, "error");
+            peer.on('connection', (c) => {
+                setupConnection(c);
             });
         }
 
-        // --- الاتصال بجهاز آخر ---
+        // --- الاتصال بطرف آخر ---
         function connectToPeer() {
             const remoteId = document.getElementById('remote-id-input').value.trim();
-            if (!remoteId) {
-                alert("يرجى إدخال ID الجهاز الآخر");
-                return;
-            }
-            if (remoteId === myId) {
-                alert("لا يمكنك الاتصال بنفسك!");
-                return;
-            }
-
-            updateStatus("جاري الاتصال...", "yellow");
-            log(`محاولة الاتصال بـ: ${remoteId}`, "info");
+            if (!remoteId) return alert("الرجاء إدخال ID الطرف الآخر");
             
-            const connection = peer.connect(remoteId);
-            handleConnection(connection);
+            const c = peer.connect(remoteId);
+            setupConnection(c);
         }
 
-        // --- معالجة الاتصال (سواء وارد أو صادر) ---
-        function handleConnection(connection) {
+        // --- إعداد الاتصال وتبديل الشاشة ---
+        function setupConnection(connection) {
             conn = connection;
 
             conn.on('open', () => {
-                updateStatus("تم الاتصال بنجاح", "green");
-                log("قناة البيانات مفتوحة ومشفرة.", "success");
-                showTransferArea();
+                // الانتقال للوحة التحكم
+                document.getElementById('login-view').classList.add('hidden');
+                document.getElementById('dashboard-view').classList.remove('hidden');
                 
-                // إرسال رسالة ترحيبية تلقائية
-                conn.send({ type: 'msg', content: 'تم تبادل المفاتيح بنجاح.' });
+                log("تم تأسيس القناة المشفرة بنجاح.", "success");
+                
+                // تحديث حالة الهيدر
+                const badge = document.getElementById('connection-status-badge');
+                badge.innerHTML = `<div class="w-2 h-2 rounded-full bg-red-500 animate-pulse"></div> اتصال مباشر نشط`;
+                badge.classList.replace('text-green-400', 'text-white');
+                badge.classList.add('bg-red-900/50', 'border-red-600');
             });
 
-            conn.on('data', (data) => {
-                handleData(data);
-            });
-
+            conn.on('data', handleData);
+            
             conn.on('close', () => {
-                updateStatus("تم قطع الاتصال", "red");
-                log("انقطع الاتصال بالطرف الآخر.", "error");
+                alert("تم قطع الاتصال بالطرف الآخر");
+                location.reload();
             });
         }
 
-        // --- معالجة البيانات المستلمة ---
-        let receivedChunks = [];
-        let receivedSize = 0;
-        let fileMeta = null;
+        // --- معالجة البيانات ---
+        let incomingChunks = [];
+        let incomingMeta = null;
+        let incomingSize = 0;
 
         function handleData(data) {
-            if (data.type === 'msg') {
-                log(`النظام: ${data.content}`, "info");
-            } 
-            else if (data.type === 'meta') {
-                // استلام بيانات وصفية للملف
-                fileMeta = data;
-                receivedChunks = [];
-                receivedSize = 0;
-                log(`جاري استقبال: ${fileMeta.name} (${formatBytes(fileMeta.size)})`, "info");
-                showProgress(0);
-            } 
-            else if (data.type === 'chunk') {
-                // استلام جزء من الملف
-                receivedChunks.push(data.content);
-                receivedSize += data.content.byteLength;
+            if (data.type === 'meta') {
+                incomingMeta = data;
+                incomingChunks = [];
+                incomingSize = 0;
+                startTransferUI(data.name, 'receive');
+                log(`بدأ استقبال: ${data.name}`, "info");
+            } else if (data.type === 'chunk') {
+                incomingChunks.push(data.content);
+                incomingSize += data.content.byteLength;
                 
-                const percent = Math.round((receivedSize / fileMeta.size) * 100);
-                updateProgress(percent);
+                // تحديث الواجهة
+                updateTransferUI(incomingSize, incomingMeta.size);
 
-                if (receivedSize >= fileMeta.size) {
-                    // اكتمل الملف
-                    saveFile();
+                if (incomingSize >= incomingMeta.size) {
+                    finalizeDownload();
                 }
             }
         }
 
-        // --- حفظ الملف المستلم ---
-        function saveFile() {
-            log("اكتمل التنزيل. جاري تجميع الملف...", "success");
-            const blob = new Blob(receivedChunks, { type: fileMeta.mime });
+        function finalizeDownload() {
+            const blob = new Blob(incomingChunks, { type: incomingMeta.mime });
             const url = URL.createObjectURL(blob);
-            
             const a = document.createElement('a');
             a.href = url;
-            a.download = fileMeta.name;
-            a.style.display = 'none';
-            document.body.appendChild(a);
+            a.download = incomingMeta.name;
             a.click();
             
-            setTimeout(() => {
-                document.body.removeChild(a);
-                window.URL.revokeObjectURL(url);
-                resetProgress();
-            }, 100);
+            // تحديث الإحصائيات
+            stats.received++;
+            stats.totalBytes += incomingMeta.size;
+            updateDashboardStats();
             
-            log(`تم حفظ الملف: ${fileMeta.name}`, "success");
+            log(`تم الاستلام بنجاح: ${incomingMeta.name}`, "success");
+            endTransferUI();
         }
 
-        // --- إرسال الملف ---
-        const fileInput = document.getElementById('file-input');
-        fileInput.addEventListener('change', (e) => {
+        // --- الإرسال ---
+        document.getElementById('file-input').addEventListener('change', (e) => {
             const file = e.target.files[0];
-            if (!file) return;
-            if (!conn || !conn.open) {
-                alert("يجب الاتصال بطرف آخر أولاً!");
-                return;
-            }
-            sendFile(file);
+            if (file && conn) sendFile(file);
         });
 
         // دعم السحب والإفلات
         const dropZone = document.getElementById('drop-zone');
-        dropZone.addEventListener('dragover', (e) => {
-            e.preventDefault();
-            dropZone.classList.add('border-red-600', 'bg-gray-900');
-        });
-        dropZone.addEventListener('dragleave', (e) => {
-            e.preventDefault();
-            dropZone.classList.remove('border-red-600', 'bg-gray-900');
-        });
+        dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('bg-red-900/20', 'border-red-500'); });
+        dropZone.addEventListener('dragleave', (e) => { e.preventDefault(); dropZone.classList.remove('bg-red-900/20', 'border-red-500'); });
         dropZone.addEventListener('drop', (e) => {
             e.preventDefault();
-            dropZone.classList.remove('border-red-600', 'bg-gray-900');
+            dropZone.classList.remove('bg-red-900/20', 'border-red-500');
             const file = e.dataTransfer.files[0];
-            if (file && conn && conn.open) sendFile(file);
+            if (file && conn) sendFile(file);
         });
 
-        async function sendFile(file) {
-            log(`جاري تجهيز: ${file.name}`, "info");
+        function sendFile(file) {
+            conn.send({ type: 'meta', name: file.name, size: file.size, mime: file.type });
             
-            // 1. إرسال الميتاداتا
-            conn.send({
-                type: 'meta',
-                name: file.name,
-                size: file.size,
-                mime: file.type
-            });
-
-            // 2. تقسيم وإرسال الملف
-            const chunkSize = 16 * 1024; // 16KB per chunk (safe for WebRTC)
-            const totalChunks = Math.ceil(file.size / chunkSize);
+            const chunkSize = 16 * 1024;
             let offset = 0;
-
-            showProgress(0);
-
-            // استخدام FileReader لقراءة الملف كـ ArrayBuffer
             const reader = new FileReader();
-            
-            // دالة مساعدة لقراءة جزء معين
-            function readSlice(o) {
-                const slice = file.slice(offset, o + chunkSize);
-                reader.readAsArrayBuffer(slice);
-            }
+
+            startTransferUI(file.name, 'send');
+            log(`جاري إرسال: ${file.name}`, "info");
 
             reader.onload = (e) => {
-                conn.send({
-                    type: 'chunk',
-                    content: e.target.result
-                });
-
+                conn.send({ type: 'chunk', content: e.target.result });
                 offset += chunkSize;
-                const percent = Math.min(100, Math.round((offset / file.size) * 100));
-                updateProgress(percent);
+                
+                updateTransferUI(Math.min(offset, file.size), file.size);
 
                 if (offset < file.size) {
-                    // قراءة الجزء التالي بسرعة ولكن نعطي فرصة للمتصفح (setTimeout 0)
-                    setTimeout(() => readSlice(offset), 5); // تأخير بسيط لمنع تجميد المتصفح
+                    readSlice(offset);
                 } else {
-                    log("تم إرسال الملف بنجاح.", "success");
-                    resetProgress();
+                    stats.sent++;
+                    stats.totalBytes += file.size;
+                    updateDashboardStats();
+                    log(`اكتمل الإرسال: ${file.name}`, "success");
+                    endTransferUI();
                 }
             };
 
+            const readSlice = (o) => {
+                const slice = file.slice(o, o + chunkSize);
+                reader.readAsArrayBuffer(slice);
+            };
             readSlice(0);
         }
 
-        // --- أدوات مساعدة ---
-        function updateStatus(text, color) {
-            statusText.innerText = text;
-            statusDot.className = `w-2 h-2 rounded-full inline-block ${color === 'green' ? 'bg-green-500 shadow-[0_0_10px_rgba(34,197,94,0.8)]' : color === 'red' ? 'bg-red-500' : 'bg-yellow-500'}`;
-            if(color === 'green') document.getElementById('remote-id-input').classList.add('border-green-500');
+        // --- منطق حساب الوقت والسرعة ---
+        function startTransferUI(filename, type) {
+            document.getElementById('active-transfer').classList.remove('hidden');
+            document.getElementById('current-filename').innerText = (type === 'send' ? 'جاري الإرسال: ' : 'جاري الاستقبال: ') + filename;
+            startTime = Date.now();
+            lastTime = startTime;
+            lastLoaded = 0;
         }
 
-        function showTransferArea() {
-            transferArea.classList.remove('hidden');
+        function updateTransferUI(loaded, total) {
+            const now = Date.now();
+            const percent = ((loaded / total) * 100).toFixed(1);
+            
+            // تحديث الشريط
+            document.getElementById('progress-bar').style.width = `${percent}%`;
+            document.getElementById('progress-percent').innerText = `${percent}%`;
+
+            // حساب السرعة والوقت كل 500ms لتجنب الوميض
+            if (now - lastTime >= 500) {
+                const durationInSeconds = (now - startTime) / 1000;
+                const bytesPerSecond = loaded / durationInSeconds; // متوسط السرعة
+                
+                // حساب الوقت المتبقي
+                const remainingBytes = total - loaded;
+                const remainingSeconds = remainingBytes / bytesPerSecond;
+
+                // العرض
+                document.getElementById('transfer-speed').innerText = formatSize(bytesPerSecond) + '/s';
+                document.getElementById('time-remaining').innerHTML = `<i class="fas fa-clock ml-1"></i> متبقي: ${formatTime(remainingSeconds)}`;
+
+                lastTime = now;
+            }
+        }
+
+        function endTransferUI() {
             setTimeout(() => {
-                transferArea.classList.remove('opacity-0');
-            }, 10);
+                document.getElementById('active-transfer').classList.add('hidden');
+                document.getElementById('progress-bar').style.width = '0';
+            }, 1000);
+        }
+
+        function updateDashboardStats() {
+            document.getElementById('stat-sent').innerText = stats.sent;
+            document.getElementById('stat-received').innerText = stats.received;
+            document.getElementById('stat-size').innerText = formatSize(stats.totalBytes);
+        }
+
+        // --- دوال مساعدة ---
+        function log(msg, type) {
+            const logs = document.getElementById('logs');
+            const color = type === 'error' ? 'text-red-500' : type === 'success' ? 'text-green-400' : 'text-gray-300';
+            const icon = type === 'success' ? '>' : type === 'error' ? '!' : '#';
+            
+            logs.innerHTML += `<div class="border-b border-gray-800/50 pb-1 mb-1">
+                <span class="text-gold font-bold mr-1">${icon}</span>
+                <span class="${color}">${msg}</span>
+            </div>`;
+            logs.scrollTop = logs.scrollHeight;
+        }
+
+        function formatSize(bytes) {
+            if (bytes === 0) return '0 B';
+            const k = 1024;
+            const sizes = ['B', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
+        function formatTime(seconds) {
+            if (!isFinite(seconds) || seconds < 0) return "جاري الحساب...";
+            if (seconds < 60) return `${Math.ceil(seconds)} ثانية`;
+            const m = Math.floor(seconds / 60);
+            const s = Math.ceil(seconds % 60);
+            return `${m} دقيقة و ${s} ثانية`;
         }
 
         function copyId() {
             const id = document.getElementById('my-id').innerText;
-            navigator.clipboard.writeText(id).then(() => {
-                log("تم نسخ الـ ID للحافظة", "success");
-            });
+            navigator.clipboard.writeText(id);
+            log("تم نسخ المعرف للحافظة", "sys");
         }
 
-        function log(msg, type) {
-            const div = document.createElement('div');
-            const time = new Date().toLocaleTimeString('en-US', {hour12: false, hour: "numeric", minute: "numeric"});
-            div.innerHTML = `<span class="text-gray-500">[${time}]</span> <span class="${type === 'error' ? 'text-red-500' : type === 'success' ? 'text-green-400' : 'text-blue-300'}">${msg}</span>`;
-            logs.appendChild(div);
-            logs.scrollTop = logs.scrollHeight;
-        }
-
-        function formatBytes(bytes, decimals = 2) {
-            if (bytes === 0) return '0 Bytes';
-            const k = 1024;
-            const dm = decimals < 0 ? 0 : decimals;
-            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-            const i = Math.floor(Math.log(bytes) / Math.log(k));
-            return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
-        }
-
-        function showProgress(percent) {
-            progressContainer.classList.remove('hidden');
-            updateProgress(percent);
-        }
-
-        function updateProgress(percent) {
-            progressBar.style.width = `${percent}%`;
-            progressPercent.innerText = `${percent}%`;
-        }
-
-        function resetProgress() {
-            setTimeout(() => {
-                progressContainer.classList.add('hidden');
-                progressBar.style.width = '0%';
-            }, 2000);
-        }
-
-        // بدء التشغيل
-        window.addEventListener('load', initPeer);
-
+        window.onload = initSystem;
     </script>
 </body>
 </html>
+
 
